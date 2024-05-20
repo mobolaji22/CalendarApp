@@ -29,21 +29,33 @@ const updateEventList = (selectedDate) => {
   const eventList = document.getElementById("event-list");
   eventList.innerHTML = ""; // Clear the current list
 
-  // events.forEach((event) => {
+  events.forEach((event) => {
     //   const eventItem = document.createElement("li");
     //   eventItem.textContent = event.title;
     // Filter events to show only those for the selected date
-    const filteredEvents = events.filter((event) => event.date === selectedDate);
+    // console.log(events);
+    // const filteredEvents = events.filter(
+    //   (event) => event.date === selectedDate
+    // );
+    // console.log(filteredEvents);
+    
 
-    filteredEvents.forEach((event) => {
+    // filteredEvents.forEach((event) => {
     const eventItem = document.createElement("li");
     eventItem.textContent = event.title;
     // console.log(eventItem);
     eventItem.addEventListener("click", () => displayEventDetails(event));
+    eventItem.addEventListener("dblclick", () => {
+      if (confirm(`Are you sure you want to delete "${event.title}"?`)) {
+        deleteEvent(event.id);
+      }
+    });
     eventList.appendChild(eventItem);
   });
   // console.log(filteredEvents);
 };
+
+
 
 // Function to display full event details
 const displayEventDetails = (event) => {
@@ -87,6 +99,17 @@ document.getElementById("event-form").addEventListener("submit", (e) => {
   updateEventList();
 });
 
+// Function to delete an event by ID
+const deleteEvent = (eventId) => {
+  let events = JSON.parse(localStorage.getItem("events")) || [];
+  events = events.filter(event => event.id !== eventId);
+  localStorage.setItem("events", JSON.stringify(events));
+  
+  // Update the event list for the currently selected date
+  updateEventList(document.querySelector("#event-date").value);
+  hideEventCreator();
+};
+
 // Call updateEventList on page load to populate the event list
 updateEventList();
 
@@ -95,6 +118,7 @@ function hideEventCreator() {
   const eventCreator = document.querySelector(".event-creator");
   eventCreator.style.transform = "translateX(-101%)";
   document.getElementById("event-form").reset();
+  document.getElementById("event-description").innerHTML = "";
 }
 
 // Close button for the event creator form

@@ -128,6 +128,9 @@ textarea {
   display: none;
   /* visibility: hidden; */
 }
+#event-list{
+  cursor: pointer;
+}
 .event-indicator{
 background-color: var(--secondary);
 height: 5px;
