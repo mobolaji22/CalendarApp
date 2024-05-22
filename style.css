@@ -121,7 +121,7 @@ textarea {
 }
 .event-list-section{
   font-size: small;
-  overflow-x: clip;
+  overflow-x: hidden;
   overflow-y: scroll;
 }
 .event-list-section::-webkit-scrollbar{

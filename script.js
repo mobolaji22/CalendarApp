@@ -1,13 +1,4 @@
-let currentMonth = new Date().getMonth();
-let currentYear = new Date().getFullYear();
-
-const isLeapYear = (year) =>
-  (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-
-const getFebDays = (year) => (isLeapYear(year) ? 29 : 28);
-
-const container = document.querySelector(".container");
-const month_names = [
+const monthNames = [
   "January",
   "February",
   "March",
@@ -22,138 +13,13 @@ const month_names = [
   "December",
 ];
 
-/////////////////////////////////////////////////////////////////
-// Function to update the event list in the sidebar
-const updateEventList = (selectedDate) => {
-  const events = JSON.parse(localStorage.getItem("events")) || [];
-  const eventList = document.getElementById("event-list");
-  eventList.innerHTML = ""; // Clear the current list
-
-  events.forEach((event) => {
-    //   const eventItem = document.createElement("li");
-    //   eventItem.textContent = event.title;
-    // Filter events to show only those for the selected date
-    // console.log(events);
-    // const filteredEvents = events.filter(
-    //   (event) => event.date === selectedDate
-    // );
-    // console.log(filteredEvents);
-    
-
-    // filteredEvents.forEach((event) => {
-    const eventItem = document.createElement("li");
-    eventItem.textContent = event.title;
-    // console.log(eventItem);
-    eventItem.addEventListener("click", () => displayEventDetails(event));
-    eventItem.addEventListener("dblclick", () => {
-      if (confirm(`Are you sure you want to delete "${event.title}"?`)) {
-        deleteEvent(event.id);
-      }
-    });
-    eventList.appendChild(eventItem);
-  });
-  // console.log(filteredEvents);
-};
-
-
-
-// Function to display full event details
-const displayEventDetails = (event) => {
-  // display the details in the create-event-section
-  document.querySelector("#event-date").value = event.date;
-  document.querySelector("#event-title").value = event.title;
-  document.querySelector("#event-description").textContent = event.description;
-};
-
-// Event creation
-document.getElementById("event-form").addEventListener("submit", (e) => {
-  e.preventDefault();
-
-  // Get form values
-  const eventDate = document.querySelector("#event-date").value;
-  const eventTitle = document.querySelector("#event-title").value;
-  const eventDescription = document.querySelector("#event-description").value;
-
-  // Validate form fields
-  if (!eventTitle.trim() || !eventDescription.trim()) {
-    alert("Please fill in all the fields.");
-    return;
-  }
-
-  // Store the event details using localStorage
-  const events = JSON.parse(localStorage.getItem("events")) || [];
-  events.push({
-    date: eventDate,
-    title: eventTitle,
-    description: eventDescription,
-  });
-  localStorage.setItem("events", JSON.stringify(events));
-
-  // Clear the event creator form and hide it
-  hideEventCreator();
-
-  // refresh the calendar to show the new event
-  generateCalendar(currentMonth, currentYear);
-
-  // Update the event list after creating an event
-  updateEventList();
-});
-
-// Function to delete an event by ID
-const deleteEvent = (eventId) => {
-  let events = JSON.parse(localStorage.getItem("events")) || [];
-  events = events.filter(event => event.id !== eventId);
-  localStorage.setItem("events", JSON.stringify(events));
-  
-  // Update the event list for the currently selected date
-  updateEventList(document.querySelector("#event-date").value);
-  hideEventCreator();
-};
-
-// Call updateEventList on page load to populate the event list
-updateEventList();
-
-// Function to hide the event creator
-function hideEventCreator() {
-  const eventCreator = document.querySelector(".event-creator");
-  eventCreator.style.transform = "translateX(-101%)";
-  document.getElementById("event-form").reset();
-  document.getElementById("event-description").innerHTML = "";
-}
-
-// Close button for the event creator form
-document.querySelector(".close").addEventListener("click", hideEventCreator);
-
-/////////////////////////////////////////////////////////////////////////////////////////////
-
-// Function to generate the calendar
-const generateCalendar = (month, year) => {
-  const calendar_days = document.querySelector(".calendar-days");
-  calendar_days.innerHTML = "";
-
-  // Retrieve events from localStorage
-  const events = JSON.parse(localStorage.getItem("events")) || [];
-
-  // Function to handle day click and open the event creator
-  const openEventCreator = (dayNum, month, year) => {
-    // Display the event creator form
-    const eventCreator = document.querySelector(".event-creator");
-    eventCreator.style.transform = "translateX(0%)";
-
-    // Pre-fill the selected date in the form
-    const eventDateInput = document.querySelector("#event-date");
-    eventDateInput.value = `${year}-${String(month + 1).padStart(
-      2,
-      "0"
-    )}-${String(dayNum).padStart(2, "0")}`;
-  };
-
-  // Generate the calendar
-  const calendar_header_month = document.querySelector(".month");
-  const calendar_header_year = document.querySelector(".year");
-  const days_of_month = [
+const isLeapYear = (year) =>
+  (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+const getDaysInFebruary = (year) => (isLeapYear(year) ? 29 : 28);
+const getDaysInMonth = (month, year) => {
+  const daysOfMonth = [
     31,
-    getFebDays(year),
+    getDaysInFebruary(year),
     31,
     30,
     31,
@@ -165,53 +31,207 @@ const generateCalendar = (month, year) => {
     30,
     31,
   ];
+  return daysOfMonth[month];
+};
 
-  const currentDate = new Date();
-  calendar_header_month.textContent = month_names[month];
-  calendar_header_year.textContent = year;
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
+const today = new Date();
 
-  // Generate the days of the week
-  const first_day = new Date(year, month);
-  const firstDayIndex = first_day.getDay();
+const generateCalendar = (month, year) => {
+  const calendarDays = document.querySelector(".calendar-days");
+  calendarDays.innerHTML = "";
+  const events = JSON.parse(localStorage.getItem("events")) || [];
 
-  for (let i = 0; i < days_of_month[month] + firstDayIndex; i++) {
+  // Update the calendar header
+  const calendarHeaderMonth = document.querySelector(".month");
+  const calendarHeaderYear = document.querySelector(".year");
+  calendarHeaderMonth.textContent = monthNames[month];
+  calendarHeaderYear.textContent = year;
+
+  // Get the first day of the month
+  const firstDay = new Date(year, month, 1).getDay();
+
+  // Generate the days
+  for (let i = 0; i < getDaysInMonth(month, year) + firstDay; i++) {
     const day = document.createElement("div");
-
-    if (i >= firstDayIndex) {
-      const dayNum = i - firstDayIndex + 1;
+    if (i >= firstDay) {
+      const dayNum = i - firstDay + 1;
       day.textContent = dayNum;
+      day.classList.add("calendar-day");
+      day.setAttribute("data-day", dayNum);
+      day.setAttribute("data-month", month);
+      day.setAttribute("data-year", year);
 
-      // Check if there's an event for this date
-      const eventForDay = events.find(
-        (event) =>
-          event.date ===
-          `${year}-${String(month + 1).padStart(2, "0")}-${String(
-            dayNum
-          ).padStart(2, "0")}`
-      );
-      if (eventForDay) {
-        // Create an element to display the event
-        const eventElement = document.createElement("span");
-        eventElement.classList.add("event-indicator");
-        day.appendChild(eventElement);
-      }
-      // Add click event listener to each day
-      day.addEventListener("click", () =>
-        openEventCreator(dayNum, month, year)
-      );
+      // Highlight the current date
       if (
-        dayNum === currentDate.getDate() &&
-        year === currentDate.getFullYear() &&
-        month === currentDate.getMonth()
+        dayNum === today.getDate() &&
+        month === today.getMonth() &&
+        year === today.getFullYear()
       ) {
         day.classList.add("current-date");
+      }
+
+      // Add event listeners for creating and editing events
+      day.addEventListener("click", openEventCreator);
+
+      // Display an event indicator if there are events on this day
+      const dayEvents = events.filter(
+        (e) =>
+          new Date(e.date).toDateString() ===
+          new Date(year, month, dayNum).toDateString()
+      );
+      if (dayEvents.length > 0) {
+        const eventIndicator = document.createElement("span");
+        eventIndicator.classList.add("event-indicator");
+        day.appendChild(eventIndicator);
       }
     } else {
       day.classList.add("padding");
     }
-    calendar_days.appendChild(day);
+    calendarDays.appendChild(day);
   }
 };
+
+// Function to update the event list for the selected day
+const updateEventList = (dayNum, month, year) => {
+  const eventList = document.querySelector("#event-list");
+  eventList.innerHTML = ""; // Clear the current list
+
+  const events = JSON.parse(localStorage.getItem("events")) || [];
+  const dayEvents = events.filter(
+    (e) =>
+      new Date(e.date).toDateString() ===
+      new Date(year, month, dayNum).toDateString()
+  );
+
+  dayEvents.forEach((event) => {
+    const eventItem = document.createElement("li");
+    eventItem.textContent = event.title;
+    eventItem.setAttribute("data-event-id", event.id);
+    eventItem.addEventListener("click", () => editEvent(event.id));
+    eventItem.addEventListener("dblclick", (e) => {
+      e.stopPropagation(); // Prevent the click event from firing
+      if (confirm(`Are you sure you want to delete "${event.title}"?`)) {
+        deleteEvent(event.id);
+      }
+    });
+    eventList.appendChild(eventItem);
+  });
+};
+
+// Function to open the event creator form
+function openEventCreator(event) {
+  const dayElement = event.target;
+  const dayNum = dayElement.getAttribute("data-day");
+  const month = dayElement.getAttribute("data-month");
+  const year = dayElement.getAttribute("data-year");
+
+  // Display the event creator form
+  const eventCreator = document.querySelector(".event-creator");
+  eventCreator.style.transform = "translateX(0%)";
+
+  // Pre-fill the selected date in the form
+  const eventDateInput = document.querySelector("#event-date");
+  eventDateInput.value = `${year}-${String(parseInt(month) + 1).padStart(
+    2,
+    "0"
+  )}-${String(dayNum).padStart(2, "0")}`;
+
+  // Update the event list for the selected day
+  updateEventList(dayNum, month, year);
+}
+
+// Function to edit an existing event
+function editEvent(eventId) {
+  const events = JSON.parse(localStorage.getItem("events")) || [];
+  const event = events.find((e) => e.id === eventId);
+
+  if (event) {
+    const eventCreator = document.querySelector(".event-creator");
+    eventCreator.style.transform = "translateX(0%)";
+
+    const eventDateInput = document.querySelector("#event-date");
+    const eventTitleInput = document.querySelector("#event-title");
+    const eventDescriptionInput = document.querySelector("#event-description");
+
+    eventDateInput.value = event.date;
+    eventTitleInput.value = event.title;
+    eventDescriptionInput.value = event.description;
+    eventDateInput.setAttribute("data-event-id", event.id);
+  }
+}
+
+// Function to save (create or edit) an event
+function saveEvent() {
+  const eventDate = document.querySelector("#event-date").value;
+  const eventTitle = document.querySelector("#event-title").value;
+  const eventDescription = document.querySelector("#event-description").value;
+
+  const events = JSON.parse(localStorage.getItem("events")) || [];
+  const eventId = document
+    .querySelector("#event-date")
+    .getAttribute("data-event-id");
+
+  if (eventId) {
+    // Edit existing event
+    const existingEventIndex = events.findIndex((e) => e.id === eventId);
+    if (existingEventIndex > -1) {
+      events[existingEventIndex].date = eventDate;
+      events[existingEventIndex].title = eventTitle;
+      events[existingEventIndex].description = eventDescription;
+    }
+  } else {
+    // Create new event
+    const newEvent = {
+      id: Date.now().toString(),
+      date: eventDate,
+      title: eventTitle,
+      description: eventDescription,
+    };
+    events.push(newEvent);
+  }
+
+  localStorage.setItem("events", JSON.stringify(events));
+  const selectedDate = new Date(eventDate);
+  updateEventList(
+    selectedDate.getDate(),
+    selectedDate.getMonth(),
+    selectedDate.getFullYear()
+  );
+  hideEventCreator();
+  generateCalendar(currentMonth, currentYear);
+}
+
+// Function to delete an event
+function deleteEvent(eventId) {
+  const events = JSON.parse(localStorage.getItem("events")) || [];
+  const updatedEvents = events.filter((e) => e.id !== eventId);
+  localStorage.setItem("events", JSON.stringify(updatedEvents));
+  generateCalendar(currentMonth, currentYear);
+
+  // Use the higher scope variables
+  const selectedDate = new Date(document.querySelector("#event-date").value);
+  updateEventList(
+    selectedDate.getDate(),
+    selectedDate.getMonth(),
+    selectedDate.getFullYear()
+  );
+  hideEventCreator();
+}
+
+// Function to hide the event creator form
+function hideEventCreator() {
+  const eventCreator = document.querySelector(".event-creator");
+  eventCreator.style.transform = "translateX(-100%)";
+  document.getElementById("event-form").reset();
+  document.getElementById("event-description").innerHTML = "";
+  const eventDateInput = document.querySelector("#event-date");
+  eventDateInput.removeAttribute("data-event-id"); // Clear the event ID attribute
+}
+
+// Initial call to generate the calendar for the current month and year
+generateCalendar(currentMonth, currentYear);
 
 // Event listeners for the previous and next buttons
 document.querySelector("#pre-month").onclick = () => {
@@ -246,7 +266,15 @@ const returnToCurrentDate = () => {
 // Add event listeners to the month and year headers
 document.querySelector(".month").addEventListener("click", returnToCurrentDate);
 document.querySelector(".year").addEventListener("click", returnToCurrentDate);
-generateCalendar(currentMonth, currentYear);
+
+// Event listener for saving the event
+document.querySelector("#save-event").addEventListener("click", saveEvent);
+
+// Close button for the event creator form
+document.query;
+
+// Close button for the event creator form
+document.querySelector(".close").addEventListener("click", hideEventCreator);
 
 // footer date display
 const fullDetails = document.querySelector(".fullDetails");
@@ -269,20 +297,13 @@ showDate.innerHTML = currentDateformat;
 // footer time display
 setInterval(() => {
   const timer = new Date();
-  // const option = {
-  //   hour: "numeric",
-  //   minute: "numeric",
-  //   second: "numeric",
-  // };
-  //   const formatTimer = new Intl.DateTimeFormat("en-US", option).format(timer);
-  let time = `${`${timer.getHours()}`.padStart(
+  const time = `${`${timer.getHours()}`.padStart(
     2,
     "0"
   )}:${`${timer.getMinutes()}`.padStart(
     2,
     "0"
   )}:${`${timer.getSeconds()}`.padStart(2, "0")}`;
-  //   showTime.innerHTML = formatTimer;
   showTime.innerHTML = time;
 }, 1000);
 
@@ -291,84 +312,104 @@ const weatherBtn = document.getElementById("weather-btn");
 const weatherDisplay = document.getElementById("weather-display");
 const API_KEY = "ac2f72a7c4dcdcd518209e33465a5f55"; // API key for OpenWeather API
 
-// 3 days weather forcast
+// 3 days weather forecast
 const createWeatherCard = (cityName, weatherItem) => {
   // html for main weather card
   return `<li class="weather">
-  <h4>${cityName} (${weatherItem.dt_txt.split(" ")[0]})</h4>
-  <img src="https://openweathermap.org/img/wn/${
-    weatherItem.weather[0].icon
-  }@2x.png" alt="weather-icon">
-  <h4>Des: ${weatherItem.weather[0].description}</h4>
-  <h4>Temp: ${(weatherItem.main.temp - 273.15).toFixed(2)}°C</h4>
-  <h4>Wind: ${weatherItem.wind.speed}M/S</h4>
-  <h4>Humidity: ${weatherItem.main.humidity}%</h4>
+    <h4>${cityName} (${weatherItem.dt_txt.split(" ")[0]})</h4>
+    <img src="https://openweathermap.org/img/wn/${
+      weatherItem.weather[0].icon
+    }@2x.png" alt="weather-icon">
+    <h4>Description: ${weatherItem.weather[0].description}</h4>
+    <h4>Temp: ${(weatherItem.main.temp - 273.15).toFixed(2)}°C</h4>
+    <h4>Wind: ${weatherItem.wind.speed}M/S</h4>
+    <h4>Humidity: ${weatherItem.main.humidity}%</h4>
   </li>`;
 };
+
 // get weather details
 const getWeatherData = (cityName, lat, lon) => {
   const WEATHER_API_URL = `http://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}`;
   fetch(WEATHER_API_URL)
     .then((res) => res.json())
     .then((data) => {
-      // filter the forcasts to only get one per day
-      const uniqueForcastDays = [];
-      const threeDaysForcast = data.list.filter((forcast) => {
-        const forcastDate = new Date(forcast.dt_txt).getDate();
-        if (!uniqueForcastDays.includes(forcastDate)) {
-          return uniqueForcastDays.push(forcastDate);
+      if (!data.list || data.list.length === 0) {
+        throw new Error("No weather data available");
+      }
+      // filter the forecasts to only get one per day
+      const uniqueForecastDays = [];
+      const threeDaysForecast = data.list.filter((forecast) => {
+        const forecastDate = new Date(forecast.dt_txt).getDate();
+        if (!uniqueForecastDays.includes(forecastDate)) {
+          return uniqueForecastDays.push(forecastDate);
         }
       });
       // clearing previous weather data
       weatherDisplay.innerHTML = "";
-      // creating weather carrds and adding them to the DOM
-      threeDaysForcast.forEach((weatherItem, index) => {
+      // creating weather cards and adding them to the DOM
+      threeDaysForecast.forEach((weatherItem, index) => {
         weatherDisplay.insertAdjacentHTML(
           "beforeend",
           createWeatherCard(cityName, weatherItem, index)
         );
       });
     })
-    .catch(() => {
-      alert("An error occurred while fetching the weather forecast");
+    .catch((error) => {
+      alert(
+        `An error occurred while fetching the weather forecast: ${error.message}`
+      );
     });
 };
 
-// get cordinates using reverse geocoding API
-const getUserCordinates = () => {
+// get coordinates using reverse geocoding API
+const getUserCoordinates = () => {
   navigator.geolocation.getCurrentPosition(
     (position) => {
       const { latitude, longitude } = position.coords;
       const REVERSE_GEOCODING_URL = `http://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${API_KEY}`;
 
-      // get city name from cordinates using reverse geocoding API
+      // get city name from coordinates using reverse geocoding API
       fetch(REVERSE_GEOCODING_URL)
         .then((res) => res.json())
         .then((data) => {
+          if (!data[0]) {
+            throw new Error("No city found at this location");
+          }
           const { name } = data[0];
           // get weather data for the city
           getWeatherData(name, latitude, longitude);
         })
-        .catch(() => {
-          alert("An error occurred while fetching the city");
+        .catch((error) => {
+          alert(`An error occurred while fetching the city: ${error.message}`);
         });
     },
     (error) => {
-      // show alert if error
-      if (error.code === error.PERMISSION_DENIED) {
-        alert(
-          "Geolocation request denied. Please reset location permission to grant access."
-        );
-      } else {
-        alert("Network error");
+      let errorMessage;
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          errorMessage =
+            "Geolocation request denied. Please reset location permission to grant access.";
+          break;
+        case error.POSITION_UNAVAILABLE:
+          errorMessage = "Location information is unavailable.";
+          break;
+        case error.TIMEOUT:
+          errorMessage = "The request to get user location timed out.";
+          break;
+        default:
+          errorMessage = "An unknown error occurred.";
+          break;
       }
+      alert(errorMessage);
     }
   );
 };
 
-weatherBtn.addEventListener("click", () => {
-  weatherDisplay.classList.toggle("active");
-  if (weatherDisplay.classList.contains("active")) {
-    getUserCordinates();
-  }
-});
+if (weatherBtn) {
+  weatherBtn.addEventListener("click", () => {
+    weatherDisplay.classList.toggle("active");
+    if (weatherDisplay.classList.contains("active")) {
+      getUserCoordinates();
+    }
+  });
+}
