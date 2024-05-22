@@ -168,6 +168,11 @@ function saveEvent() {
   const eventTitle = document.querySelector("#event-title").value;
   const eventDescription = document.querySelector("#event-description").value;
 
+  if (!eventDate || !eventTitle || !eventDescription) {
+    alert("Please fill in all the fields.");
+    return;
+  }
+
   const events = JSON.parse(localStorage.getItem("events")) || [];
   const eventId = document
     .querySelector("#event-date")
